@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class ActivityUserPage extends StatefulWidget {
   @override
@@ -28,12 +29,22 @@ class _ActivityUserPageState extends State<ActivityUserPage> {
     _databaseSuratKadaluwarsa.onChildAdded.listen((event) {
       setState(() {
         DataSnapshot snapshot = event.snapshot;
-        _suratKadaluwarsaList.add(Map<dynamic, dynamic>.from(snapshot.value as Map));
+        _suratKadaluwarsaList
+            .add(Map<dynamic, dynamic>.from(snapshot.value as Map));
+      });
+    });
+
+    _databaseSuratKadaluwarsa.onChildRemoved.listen((event) {
+      setState(() {
+        DataSnapshot snapshot = event.snapshot;
+        var surat =
+            Map<dynamic, dynamic>.from(snapshot.value as Map<dynamic, dynamic>);
+        _suratKadaluwarsaList.removeWhere((item) => item['key'] == surat['key']);
       });
     });
   }
 
-  void _hapusSuratKadaluwarsa(String key) {
+  void _hapusSuratKadaluwarsa(int index) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -49,12 +60,27 @@ class _ActivityUserPageState extends State<ActivityUserPage> {
             ),
             TextButton(
               onPressed: () {
-                _databaseSuratKadaluwarsa.child(key).remove().then((_) {
-                  setState(() {
-                    _suratKadaluwarsaList.removeWhere((surat) => surat['key'] == key);
+                final surat = _suratKadaluwarsaList[index];
+                final suratKey = surat['SuratKadaluwarsa_uid'];
+                final downloadURL = surat['download_url'];
+
+                // Hapus file dari Firebase Storage
+                firebase_storage.FirebaseStorage.instance
+                    .refFromURL(downloadURL)
+                    .delete()
+                    .then((_) {
+                  // Hapus dari database SuratKadaluwarsa
+                  _databaseSuratKadaluwarsa.child(suratKey).remove().then((_) {
+                    if (mounted) {
+                      setState(() {
+                        _suratKadaluwarsaList.removeAt(index);
+                      });
+                    }
+                  }).catchError((error) {
+                    print('Gagal menghapus surat kadaluwarsa: $error');
                   });
                 }).catchError((error) {
-                  print('Gagal menghapus surat: $error');
+                  print('Gagal menghapus file dari Firebase Storage: $error');
                 });
 
                 Navigator.of(context).pop(); // Tutup dialog konfirmasi
@@ -64,8 +90,16 @@ class _ActivityUserPageState extends State<ActivityUserPage> {
           ],
         );
       },
-    );
+    ).then((value) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
+
+
+
+
 
   void _viewFile(String? downloadURL) {
     if (downloadURL != null) {
@@ -113,12 +147,14 @@ class _ActivityUserPageState extends State<ActivityUserPage> {
                           ),
                           trailing: IconButton(
                             icon: Icon(Icons.check),
-                            onPressed: () => _hapusSuratKadaluwarsa(surat['key']),
+                            onPressed: () =>
+                                _hapusSuratKadaluwarsa(index), // Memanggil fungsi dengan parameter index
                           ),
                           // Tombol Download
                           leading: IconButton(
                             icon: Icon(Icons.file_download),
-                            onPressed: () => _viewFile(surat['download_url']),
+                            onPressed: () =>
+                                _viewFile(surat['download_url']),
                           ),
                         ),
                       );

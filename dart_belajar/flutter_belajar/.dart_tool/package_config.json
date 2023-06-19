@@ -272,12 +272,6 @@
       "languageVersion": "2.12"
     },
     {
-      "name": "image_viewer",
-      "rootUri": "file:///C:/Users/Win10/AppData/Local/Pub/Cache/hosted/pub.dev/image_viewer-1.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "intl",
       "rootUri": "file:///C:/Users/Win10/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.18.1",
       "packageUri": "lib/",
@@ -614,7 +608,7 @@
       "languageVersion": "3.1"
     }
   ],
-  "generated": "2023-06-11T23:45:05.327Z",
+  "generated": "2023-06-19T10:53:36.875572Z",
   "generator": "pub",
   "generatorVersion": "3.1.0-129.0.dev"
 }

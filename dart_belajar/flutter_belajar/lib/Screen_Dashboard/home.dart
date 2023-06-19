@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
         final difference = suratDate.difference(currentDate).inDays;
 
         // Tambahkan surat yang telah kadaluwarsa ke dalam list kadaluwarsa
-        if (difference > 30 || difference < 0) {
+        if (difference > 9999999999999 || difference < 0) {
           _kadaluwarsaList.add(surat);
         }
       });
@@ -213,7 +213,6 @@ class _HomePageState extends State<HomePage> {
                 final isDeleted = notifikasi['isDeleted'] == true;
 
                 if (isDeleted) {
-                  _notifikasiList.removeWhere((notifikasi) => notifikasi['Notifikasi_id'] == notifikasiId);
                   return SizedBox.shrink(); // Menyembunyikan notifikasi yang telah dihapus
                 }
 
@@ -257,9 +256,7 @@ class _HomePageState extends State<HomePage> {
           ],
         );
       },
-    ).then((_) {
-      _notifikasiList.removeWhere((notifikasi) => notifikasi['isDeleted'] == true);
-    });
+    );
   }
 
 
@@ -293,6 +290,7 @@ class _HomePageState extends State<HomePage> {
                 });
 
                 Navigator.of(context).pop(); // Tutup dialog konfirmasi
+                Navigator.of(context).pop(); // Tutup dialog log notifikasi
               },
               child: Text('Hapus'),
             ),
@@ -301,6 +299,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
 
   void _confirmSuratKadaluwarsa(Map<dynamic, dynamic> surat) async {
     showDialog(
@@ -328,18 +327,24 @@ class _HomePageState extends State<HomePage> {
                 // Tambahkan key ke dalam data surat
                 surat['SuratKadaluwarsa_uid'] = suratKadaluwarsaId;
 
-                suratKadaluwarsaRef.set(surat);
+                suratKadaluwarsaRef.set(surat).then((_) {
+                  // Hapus surat dari database Surat
+                  DatabaseReference suratRef =
+                      FirebaseDatabase.instance.ref().child('surat').child(surat['key']);
+                  suratRef.remove().then((_) {
+                    // Hapus surat dari daftar surat
+                    setState(() {
+                      _suratList.removeWhere((s) => s['key'] == surat['key']);
+                    });
 
-                // Hapus surat dari database Surat
-                DatabaseReference suratRef =
-                    FirebaseDatabase.instance.ref().child('surat').child(surat['key']);
-                suratRef.remove().then((_) {
-                  // Hapus surat dari daftar surat
-                  setState(() {
-                    _suratList.removeWhere((s) => s['key'] == surat['key']);
+                    // Perbarui tampilan data surat kadaluwarsa
+                    setState(() {
+                      _kadaluwarsaList.clear();
+                      _kadaluwarsaList.add(surat);
+                    });
+                  }).catchError((error) {
+                    print('Failed to delete surat: $error');
                   });
-                }).catchError((error) {
-                  print('Failed to delete surat: $error');
                 });
 
                 Navigator.of(context).pop(); // Tutup dialog konfirmasi
@@ -351,6 +356,11 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
+
+
+
+
 
   @override
   Widget build(BuildContext context) {

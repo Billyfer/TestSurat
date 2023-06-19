@@ -44,7 +44,6 @@ dependencies:
   flutter_speed_dial: ^4.0.2
   intl: ^0.18.1
   syncfusion_flutter_pdfviewer: ^20.4.54
-  image_viewer: ^1.0.0
   file_picker: ^5.3.1
   fluttertoast: ^8.0.8
 

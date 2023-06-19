@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@npmcli/fs": "^3.1.0",
+    "firebase": "^9.22.1",
+    "har-validator": "^5.1.5",
+    "uuid": "^9.0.0"
+  }
+}
